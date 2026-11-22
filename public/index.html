@@ -1,0 +1,716 @@
+<!doctype html>
+<html lang="bn">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Maltibazar BD — খাঁটি ও তাজা পণ্যের অনলাইন বাজার</title>
+    <meta
+      name="description"
+      content="Maltibazar BD — খাঁটি ও তাজা বাদাম, ড্রাই ফ্রুটস, সীডস, মশলা, মধু, খেজুর, সবজি, মাছ ও গোস্তের নির্ভরযোগ্য অনলাইন বাজার।"
+    />
+    <meta property="og:title" content="Maltibazar BD — খাঁটি ও তাজা পণ্যের অনলাইন বাজার" />
+    <meta
+      property="og:description"
+      content="Maltibazar BD — খাঁটি ও তাজা বাদাম, ড্রাই ফ্রুটস, সীডস, মশলা, মধু, খেজুর, সবজি, মাছ ও গোস্তের নির্ভরযোগ্য অনলাইন বাজার।"
+    />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <!-- Sticky Header Navbar -->
+      <header class="site-header">
+        <div class="container navbar-inner">
+          <button type="button" class="brand-btn" data-nav="home">
+            <img
+              src="./assets/images/maltibazar_logo_1795244491759.jpg"
+              alt="Maltibazar BD Logo"
+              referrerPolicy="no-referrer"
+              class="brand-logo"
+            />
+            <span class="brand-wordmark">Maltibazar BD</span>
+          </button>
+
+          <nav aria-label="Primary Navigation" class="primary-nav">
+            <button type="button" class="nav-link is-active" data-nav="home">Home</button>
+            <button type="button" class="nav-link" data-nav="shop">Shop</button>
+            <button type="button" class="nav-link" data-nav="about">About</button>
+            <button type="button" class="nav-link" data-nav="contact">Contact</button>
+          </nav>
+
+          <div class="navbar-actions">
+            <button type="button" id="orders-nav-btn" class="orders-nav-btn" data-nav="orders">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                <path d="M3 6h18" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
+              </svg>
+              <span>Orders</span>
+              <span id="nav-order-count" class="orders-count-badge tabular-nums hidden">0</span>
+            </button>
+
+            <button
+              type="button"
+              id="mobile-menu-toggle"
+              aria-label="Open menu"
+              aria-expanded="false"
+              class="mobile-menu-toggle"
+            >
+              <svg id="mobile-menu-icon-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" x2="20" y1="12" y2="12" />
+                <line x1="4" x2="20" y1="6" y2="6" />
+                <line x1="4" x2="20" y1="18" y2="18" />
+              </svg>
+              <svg id="mobile-menu-icon-close" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 6 6 18" />
+                <path d="m6 6 12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div id="mobile-drawer" class="mobile-drawer hidden">
+          <button type="button" class="mobile-drawer-btn is-active" data-nav="home">Home</button>
+          <button type="button" class="mobile-drawer-btn" data-nav="shop">Shop</button>
+          <button type="button" class="mobile-drawer-btn" data-nav="about">About</button>
+          <button type="button" class="mobile-drawer-btn" data-nav="contact">Contact</button>
+        </div>
+      </header>
+
+      <main>
+        <!-- Storefront View (Home + Shop + About + Contact) -->
+        <div id="storefront-view">
+          <!-- Hero Banner -->
+          <section class="hero-section">
+            <div class="container">
+              <!-- Top Location & Hotline Strip -->
+              <div class="top-location-strip">
+                <div class="strip-item">
+                  <svg class="icon-emerald" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <span id="top-company-address"></span>
+                </div>
+                <div class="strip-item phone tabular-nums">
+                  <svg class="icon-emerald" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <span id="top-company-phone"></span>
+                </div>
+              </div>
+
+              <!-- Customer Search Bar inside Banner -->
+              <div class="hero-search-card">
+                <form id="hero-search-form" class="hero-search-form">
+                  <div class="input-icon-wrap">
+                    <svg class="input-leading-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input
+                      type="text"
+                      id="hero-search-input"
+                      placeholder="পছন্দের পণ্য খুঁজুন (যেমন: ইলিশ, তেলাপিয়া, মধু, ঘি, কাজুবাদাম, খেজুর)..."
+                      aria-label="পছন্দের পণ্য খুঁজুন"
+                      class="hero-search-input"
+                    />
+                    <button
+                      type="button"
+                      id="hero-search-clear"
+                      aria-label="খোঁজা মুছুন"
+                      class="input-clear-btn hidden"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-search-submit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <span>পণ্য খুঁজুন</span>
+                  </button>
+                </form>
+
+                <div class="popular-searches" id="popular-searches">
+                  <span class="popular-label">জনপ্রিয়:</span>
+                </div>
+              </div>
+
+              <!-- Editorial Split Hero -->
+              <div class="hero-grid">
+                <div class="hero-copy-col">
+                  <div>
+                    <div class="hero-brand-line">
+                      <img
+                        src="./assets/images/maltibazar_logo_1795244491759.jpg"
+                        alt="Maltibazar BD লোগো"
+                        referrerPolicy="no-referrer"
+                        class="hero-brand-thumb"
+                      />
+                      <div class="hero-brand-meta">
+                        <strong>Maltibazar BD</strong>
+                        <span aria-hidden="true" style="margin:0 0.4rem;">·</span>
+                        <span>১০টি প্রিমিয়াম ক্যাটাগরি</span>
+                        <span aria-hidden="true" style="margin:0 0.4rem;">·</span>
+                        <span>৫০০ গ্রাম ও ১ কেজি প্যাক</span>
+                      </div>
+                    </div>
+
+                    <h1 class="hero-title">
+                      খাঁটি বাদাম, ড্রাই ফ্রুটস, মধু ও তাজা বাজার এখন এক ঠিকানায়
+                    </h1>
+
+                    <p class="hero-desc">
+                      Maltibazar BD সরাসরি খামার, বাগান ও বিশ্বস্ত উৎস থেকে সংগ্রহ করে প্রিমিয়াম বাদাম,
+                      সীডস, খাঁটি মশলা, প্রাকৃতিক মধু, আরবের খেজুর, খাঁটি তেল-ঘি এবং ফরমালিনমুক্ত তাজা সবজি, মাছ ও গোস্ত।
+                    </p>
+
+                    <div class="hero-cta-row">
+                      <button type="button" class="btn btn-primary" data-nav="shop">
+                        <span>Shop Now · পণ্য দেখুন</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <path d="M5 12h14" />
+                          <path d="m12 5 7 7-7 7" />
+                        </svg>
+                      </button>
+
+                      <button type="button" class="btn btn-secondary" data-nav="orders">
+                        <span>Orders · জমা থাকা অর্ডার</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="quick-menu-bar">
+                    <span class="quick-menu-label">Quick Menu:</span>
+                    <button type="button" class="quick-menu-btn" data-nav="home">Home</button>
+                    <button type="button" class="quick-menu-btn" data-nav="shop">Shop</button>
+                    <button type="button" class="quick-menu-btn" data-nav="about">About</button>
+                    <button type="button" class="quick-menu-btn" data-nav="contact">Contact</button>
+                  </div>
+                </div>
+
+                <div class="hero-media-col">
+                  <div class="hero-image-frame">
+                    <img
+                      src="./assets/images/hero_all_items_banner_1795245466213.jpg"
+                      alt="Maltibazar BD — খাঁটি বাদাম, খেজুর, মধু, মশলা, মাছ, গোস্ত ও তাজা সবজির সমাহার"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div class="hero-image-gradient" aria-hidden="true"></div>
+                    <div class="hero-image-caption">
+                      <p class="hero-caption-sub">প্রতিদিন তাজা সংগ্রহ · ৫০০ গ্রাম ও ১ কেজি প্যাক · কুল-বক্স ডেলিভেরি</p>
+                      <p class="hero-caption-main">২,০০০ টাকা বা তার বেশি অর্ডারে ফ্রি হোম ডেলিভেরি</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4-Column Service Strip -->
+              <div class="service-strip">
+                <div class="service-item">
+                  <svg class="icon-emerald" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+                    <path d="M15 18H9" />
+                    <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+                    <circle cx="17" cy="18" r="2" />
+                    <circle cx="7" cy="18" r="2" />
+                  </svg>
+                  <div>
+                    <p class="service-title">দ্রুত হোম ডেলিভেরি</p>
+                    <p class="service-sub">ঢাকায় ২৪ ঘণ্টা · সারা দেশে ৪৮-৭২ ঘণ্টায়</p>
+                  </div>
+                </div>
+
+                <div class="service-item">
+                  <svg class="icon-emerald" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                    <path d="m9 12 2 2 4-4" />
+                  </svg>
+                  <div>
+                    <p class="service-title">১০০% খাঁটি ও নিরাপদ</p>
+                    <p class="service-sub">ফরমালিন ও কেমিক্যালমুক্ত নিশ্চয়তা</p>
+                  </div>
+                </div>
+
+                <div class="service-item">
+                  <svg class="icon-emerald" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <div>
+                    <p class="service-title">সহজ পেমেন্ট ব্যবস্থা</p>
+                    <p class="service-sub">ক্যাশ অন ডেলিভেরি, বিকাশ, নগদ ও রকেট</p>
+                  </div>
+                </div>
+
+                <div class="service-item">
+                  <svg class="icon-emerald" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  <div>
+                    <p class="service-title">সরাসরি কাওরান বাজার হাব</p>
+                    <p class="service-sub">প্রতিদিন সকাল থেকে রাত অবধি সচল</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 10-Category Shop Section -->
+          <section id="shop-section" class="shop-section">
+            <div class="container">
+              <div class="shop-header-row">
+                <div>
+                  <p class="section-eyebrow">আমাদের ১০টি বিশেষ ক্যাটাগরি · ৫০০ গ্রাম ও ১ কেজি প্যাক</p>
+                  <h2 id="shop-heading" class="section-heading">বাদাম আইটেম</h2>
+                  <p id="shop-subtitle" class="section-sub">প্রিমিয়াম কাঁচা ও বাছাইকৃত বাদাম</p>
+                </div>
+
+                <div class="shop-search-box">
+                  <svg class="shop-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.3-4.3" />
+                  </svg>
+                  <input
+                    type="text"
+                    id="shop-search-input"
+                    placeholder="পণ্য খুঁজুন (যেমন: ইলিশ, মধু, আখরোট)..."
+                    aria-label="পণ্য খুঁজুন"
+                    class="shop-search-input"
+                  />
+                  <button
+                    type="button"
+                    id="shop-search-clear"
+                    aria-label="খোঁজা মুছুন"
+                    class="input-clear-btn hidden"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M18 6 6 18" />
+                      <path d="m6 6 12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- 10 Category Filter Cards + All Products -->
+              <div id="category-tabs-grid" role="tablist" aria-label="পণ্যের ১০টি ক্যাটাগরি" class="category-tabs-grid"></div>
+
+              <!-- Active Category Result Count -->
+              <div class="results-meta-bar">
+                <span id="results-count-text"></span>
+                <button type="button" id="results-reset-btn" class="text-link-btn"></button>
+              </div>
+
+              <!-- 3-Column Product Grid -->
+              <div id="products-grid" class="products-grid"></div>
+              <div id="products-empty" class="empty-state-box hidden">
+                <p id="products-empty-title" style="font-size:1rem;font-weight:600;color:var(--ink);"></p>
+                <p style="font-size:0.875rem;color:var(--ink-muted);margin:0.25rem 0 1rem;">
+                  অন্য নাম দিয়ে খুঁজুন অথবা সব ক্যাটাগরি দেখুন।
+                </p>
+                <button type="button" id="empty-show-all-btn" class="btn btn-primary" style="padding:0.5rem 1rem;font-size:0.875rem;">
+                  সব পণ্য দেখুন
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- About + Payment + Delivery Systems -->
+          <section id="about-section" class="about-section">
+            <div class="container">
+              <div class="about-top-grid">
+                <div class="about-left">
+                  <p class="section-eyebrow">আমাদের সম্পর্কে · এবাউট</p>
+                  <h2 class="section-heading" style="line-height:1.35;">
+                    Maltibazar BD — খাঁটি ও ভেজালমুক্ত খাদ্যপণ্যের নির্ভরযোগ্য প্রতিষ্ঠান
+                  </h2>
+                </div>
+
+                <div class="about-right">
+                  <p>
+                    প্রতিদিনের সুস্থ জীবনের জন্য খাঁটি ও নিরাপদ খাদ্যের বিকল্প নেই। এই বিশ্বাস থেকেই
+                    <strong style="color:var(--ink);">Maltibazar BD</strong> সরাসরি দেশের প্রত্যন্ত অঞ্চলের
+                    কৃষক, মৌয়াল, নদী ও হাওরের জেলে এবং বিশ্বস্ত আমদানিকারকদের কাছ থেকে বাছাইকৃত পণ্য সংগ্রহ
+                    করে ক্রেতাদের দোরগোড়ায় পৌঁছে দেয়।
+                  </p>
+                  <p>
+                    আমাদের প্রতিটি ক্যাটাগরির পণ্য—বাদাম, ড্রাই ফ্রুটস, সীডস, মশলা, মধু, খেজুর, তাজা সবজি,
+                    মাছ, গোস্ত ও তেল-ঘি—কঠোর মান নিয়ন্ত্রণের মাধ্যমে পরিচ্ছন্ন ও স্বাস্থ্যসম্মতভাবে প্যাকেটজাত করা হয়।
+                  </p>
+
+                  <div class="about-features">
+                    <div class="service-item">
+                      <svg class="icon-emerald" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+                        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+                      </svg>
+                      <div>
+                        <h3 class="service-title">সরাসরি উৎস থেকে সংগ্রহ</h3>
+                        <p class="service-sub">কোনো মধ্যস্বত্বভোগী ছাড়াই খাঁটি মধু, ঘি ও তাজা সবজি সংগ্রহ।</p>
+                      </div>
+                    </div>
+
+                    <div class="service-item">
+                      <svg class="icon-emerald" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" />
+                        <path d="m9 12 2 2 4-4" />
+                      </svg>
+                      <div>
+                        <h3 class="service-title">১০০% ফরমালিন ও কেমিক্যালমুক্ত</h3>
+                        <p class="service-sub">মাছ, গোস্ত ও ফলে কোনো ক্ষতিকর সংরক্ষণ রাসায়নিক ব্যবহার করা হয় না।</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment System & Delivery System Cards -->
+              <div class="info-cards-grid">
+                <div class="info-card">
+                  <div class="info-card-head">
+                    <div class="info-icon-box">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect width="20" height="14" x="2" y="5" rx="2" />
+                        <line x1="2" x2="22" y1="10" y2="10" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 style="font-size:1.125rem;font-weight:700;">পেমেন্ট সিস্টেম</h3>
+                      <p style="font-size:0.75rem;color:var(--ink-muted);">নিরাপদ ও ঝামেলামুক্ত লেনদেন</p>
+                    </div>
+                  </div>
+                  <ul class="info-list">
+                    <li class="with-divider">
+                      <strong class="item-head">ক্যাশ অন ডেলিভেরি (COD)</strong>
+                      পণ্য হাতে বুঝে পেয়ে যাচাই করার পর ডেলিভেরি প্রতিনিধির কাছে নগদ অর্থ পরিশোধ করার সুবিধা।
+                    </li>
+                    <li class="with-divider" id="about-mfs-numbers"></li>
+                    <li>
+                      <strong class="item-head">কর্পোরেট ও বাল্ক অর্ডার পেমেন্ট</strong>
+                      বড় পরিমাণ অর্ডারের জন্য সরাসরি ব্যাংক ট্রান্সফার ও অফিসিয়াল ইনভয়েস সুবিধা রয়েছে।
+                    </li>
+                  </ul>
+                </div>
+
+                <div class="info-card">
+                  <div class="info-card-head">
+                    <div class="info-icon-box">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+                        <path d="M15 18H9" />
+                        <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+                        <circle cx="17" cy="18" r="2" />
+                        <circle cx="7" cy="18" r="2" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 style="font-size:1.125rem;font-weight:700;">ডেলিভেরি সিস্টেম</h3>
+                      <p style="font-size:0.75rem;color:var(--ink-muted);">ঢাকা ও সারা বাংলাদেশে দ্রুত হোম ডেলিভেরি</p>
+                    </div>
+                  </div>
+                  <ul class="info-list">
+                    <li class="with-divider">
+                      <strong class="item-head">ঢাকা মেট্রো এলাকা (২৪ ঘণ্টার মধ্যে)</strong>
+                      ঢাকার ভিতরে দ্রুত নিজস্ব রাইডারের মাধ্যমে হোম ডেলিভেরি। ডেলিভেরি চার্জ মাত্র
+                      <span class="tabular-nums" style="font-weight:600;color:var(--ink);">৬০ টাকা</span>।
+                    </li>
+                    <li class="with-divider">
+                      <strong class="item-head">সারা বাংলাদেশ (৪৮–৭২ ঘণ্টা)</strong>
+                      ঢাকার বাইরে ৬৪ জেলায় বিশ্বস্ত কুরিয়ার সার্ভিসের মাধ্যমে নিরাপদ পার্সেল ডেলিভেরি। চার্জ
+                      <span class="tabular-nums" style="font-weight:600;color:var(--ink);">১২০ টাকা</span>।
+                    </li>
+                    <li>
+                      <strong class="item-head">ফ্রি ডেলিভেরি ও কুল-বক্স প্যাকেজিং</strong>
+                      <span class="tabular-nums" style="font-weight:600;color:var(--primary);">২,০০০ টাকা</span> বা তার
+                      বেশি অর্ডারে ডেলিভেরি সম্পূর্ণ ফ্রি। মাছ ও গোস্ত ইনসুলেটেড কুল-বক্সে পাঠানো হয়।
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Contact Section -->
+          <section id="contact-section" class="contact-section">
+            <div class="container">
+              <div class="contact-grid">
+                <div class="contact-info-col">
+                  <p class="section-eyebrow">যোগাযোগ ও ঠিকানা · কন্টাক্ট</p>
+                  <h2 class="section-heading">আমাদের সাথে যোগাযোগ করুন</h2>
+                  <p class="section-sub">
+                    যেকোনো পণ্য সম্পর্কে জানতে, পাইকারি অর্ডার দিতে কিংবা ডেলিভেরি সংক্রান্ত সহায়তার জন্য সরাসরি কল করুন।
+                  </p>
+
+                  <div id="contact-details-list" class="contact-details-list"></div>
+                </div>
+
+                <div class="contact-form-col">
+                  <div class="contact-form-card">
+                    <h3 style="font-size:1.125rem;font-weight:700;margin-bottom:0.25rem;">সরাসরি বার্তা পাঠান</h3>
+                    <p style="font-size:0.75rem;color:var(--ink-muted);margin-bottom:1.25rem;">
+                      আপনার প্রশ্ন বা মতামত লিখে পাঠালে আমাদের প্রতিনিধি দ্রুত যোগাযোগ করবেন।
+                    </p>
+
+                    <div id="contact-success-box" class="hidden" style="padding:1.5rem;border-radius:0.75rem;background:var(--bg);border:1px solid var(--border);text-align:center;">
+                      <svg class="icon-emerald" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 0.5rem;">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="m9 12 2 2 4-4" />
+                      </svg>
+                      <p style="font-size:1rem;font-weight:600;color:var(--ink);">আপনার বার্তা সফলভাবে পাঠানো হয়েছে!</p>
+                      <p style="font-size:0.875rem;color:var(--ink-secondary);margin:0.25rem 0 1rem;">
+                        Maltibazar BD টিম শীঘ্রই আপনার মোবাইল নাম্বারে যোগাযোগ করবে।
+                      </p>
+                      <button type="button" id="contact-reset-btn" class="btn btn-primary" style="padding:0.5rem 1rem;font-size:0.75rem;">
+                        নতুন বার্তা লিখুন
+                      </button>
+                    </div>
+
+                    <form id="contact-form" style="display:flex;flex-direction:column;gap:1rem;">
+                      <div class="form-grid-2">
+                        <div>
+                          <label for="contact-name" class="field-label">আপনার নাম *</label>
+                          <input id="contact-name" type="text" required placeholder="আপনার পূর্ণ নাম" class="form-control" />
+                        </div>
+                        <div>
+                          <label for="contact-phone" class="field-label">মোবাইল নাম্বার *</label>
+                          <input id="contact-phone" type="tel" required placeholder="০১৭১২-XXXXXX" class="form-control tabular-nums" />
+                        </div>
+                      </div>
+                      <div>
+                        <label for="contact-msg" class="field-label">বার্তা *</label>
+                        <textarea id="contact-msg" rows="4" required placeholder="আপনার প্রয়োজনীয় পণ্য বা প্রশ্ন সম্পর্কে বিস্তারিত লিখুন..." class="form-control"></textarea>
+                      </div>
+                      <p id="contact-error-msg" class="alert-error hidden"></p>
+                      <div>
+                        <button type="submit" id="contact-submit-btn" class="btn btn-primary" style="padding:0.625rem 1.5rem;font-size:0.875rem;">
+                          বার্তা পাঠান
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Orders & Admin Management View -->
+        <section id="orders-view" class="orders-page-section hidden">
+          <div class="container">
+            <div class="orders-header">
+              <div>
+                <p class="section-eyebrow">Maltibazar BD · অর্ডার ম্যানেজমেন্ট ও অ্যাডমিন প্যানেল</p>
+                <h1 class="section-heading">জমা থাকা অর্ডার সমূহ</h1>
+                <p class="section-sub">
+                  কাস্টমার অর্ডার ট্র্যাক করুন অথবা অ্যাডমিন প্যানেলে লগইন করে সকল অর্ডার পরিচালনা করুন।
+                </p>
+              </div>
+
+              <div id="orders-summary-stats" class="orders-stats-row"></div>
+            </div>
+
+            <!-- Customer Orders vs Admin Panel Switcher -->
+            <div class="orders-subtabs" role="tablist">
+              <button type="button" id="tab-my-orders" class="subtab-btn is-active">অর্ডার ট্র্যাকিং ও আমার অর্ডার</button>
+              <button type="button" id="tab-admin-panel" class="subtab-btn">Admin Panel (অর্ডার পরিচালনা)</button>
+            </div>
+
+            <!-- Tab 1: Customer Order Tracker + Own Recent Orders -->
+            <div id="customer-orders-panel">
+              <div class="panel-card">
+                <h2 style="font-size:1.125rem;font-weight:700;margin-bottom:0.25rem;">অর্ডার নাম্বার দিয়ে স্ট্যাটাস দেখুন</h2>
+                <p style="font-size:0.8125rem;color:var(--ink-muted);margin-bottom:1rem;">
+                  আপনার অর্ডার নাম্বার (যেমন: MB-1001) এবং অর্ডারের মোবাইল নাম্বার দিয়ে লাইভ ডেলিভেরি অবস্থা দেখুন।
+                </p>
+                <form id="track-order-form" class="form-grid-2" style="align-items:end;">
+                  <div>
+                    <label for="track-order-number" class="field-label">অর্ডার নাম্বার *</label>
+                    <input id="track-order-number" type="text" required placeholder="যেমন: MB-1001" class="form-control tabular-nums" />
+                  </div>
+                  <div>
+                    <label for="track-order-phone" class="field-label">মোবাইল নাম্বার *</label>
+                    <input id="track-order-phone" type="tel" required placeholder="০১৭১২-XXXXXX" class="form-control tabular-nums" />
+                  </div>
+                  <div style="grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;">
+                    <button type="submit" id="track-order-btn" class="btn btn-primary" style="padding:0.625rem 1.25rem;font-size:0.875rem;">
+                      অর্ডার খুঁজুন
+                    </button>
+                    <button type="button" id="back-to-shop-btn" class="btn btn-secondary" style="padding:0.625rem 1.25rem;font-size:0.875rem;">
+                      সপে ফিরে যান
+                    </button>
+                  </div>
+                </form>
+                <p id="track-error-msg" class="alert-error hidden" style="margin-top:0.875rem;"></p>
+                <div id="tracked-order-result" style="margin-top:1rem;"></div>
+              </div>
+
+              <div style="margin-top:1.75rem;">
+                <h2 style="font-size:1.125rem;font-weight:700;margin-bottom:1rem;">আপনার সাম্প্রতিক অর্ডার</h2>
+                <div id="my-session-orders-list"></div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Admin Panel (Supabase Auth + RLS) -->
+            <div id="admin-orders-panel" class="hidden">
+              <!-- Admin Login Card -->
+              <div id="admin-login-card" class="panel-card" style="max-width:30rem;">
+                <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:0.25rem;">Admin Panel লগইন</h2>
+                <p id="admin-login-subtitle" style="font-size:0.8125rem;color:var(--ink-muted);margin-bottom:1rem;">
+                  Supabase Auth অ্যাডমিন ইমেইল ও পাসওয়ার্ড দিয়ে লগইন করুন।
+                </p>
+
+                <div id="preview-mode-banner" class="alert-info hidden" style="margin-bottom:1rem;">
+                  লোকাল প্রিভিউ মোড সক্রিয় — লাইভ ক্লাউড সিঙ্কের জন্য <code>public/js/config.js</code>-এ আপনার Supabase URL ও Anon Key দিন। প্রিভিউতে যেকোনো ইমেইল দিয়ে বা নিচের বাটনে প্রবেশ করতে পারবেন।
+                </div>
+
+                <form id="admin-login-form" style="display:flex;flex-direction:column;gap:0.875rem;">
+                  <div>
+                    <label for="admin-email" class="field-label">অ্যাডমিন ইমেইল</label>
+                    <input id="admin-email" type="email" placeholder="admin@maltibazarbd.com" class="form-control" />
+                  </div>
+                  <div>
+                    <label for="admin-password" class="field-label">পাসওয়ার্ড</label>
+                    <input id="admin-password" type="password" placeholder="••••••••" class="form-control" />
+                  </div>
+                  <p id="admin-login-error" class="alert-error hidden"></p>
+                  <button type="submit" id="admin-login-btn" class="btn btn-primary" style="padding:0.65rem 1.25rem;font-size:0.875rem;">
+                    অ্যাডমিন প্যানেলে প্রবেশ করুন
+                  </button>
+                </form>
+              </div>
+
+              <!-- Authenticated Admin Workspace -->
+              <div id="admin-workspace" class="hidden">
+                <div class="panel-card" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;">
+                  <div>
+                    <div style="font-size:0.75rem;font-weight:600;color:var(--primary);">Admin Authenticated · RLS Protected</div>
+                    <div id="admin-user-email" style="font-size:0.95rem;font-weight:700;color:var(--ink);"></div>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+                    <button type="button" id="admin-refresh-btn" class="btn btn-secondary" style="padding:0.5rem 0.9rem;font-size:0.8125rem;">
+                      রিফ্রেশ করুন
+                    </button>
+                    <button type="button" id="admin-logout-btn" class="btn btn-secondary" style="padding:0.5rem 0.9rem;font-size:0.8125rem;color:var(--danger);border-color:var(--danger-border);">
+                      লগআউট
+                    </button>
+                  </div>
+                </div>
+
+                <div class="orders-filter-toolbar">
+                  <div class="shop-search-box" style="max-width:24rem;">
+                    <svg class="shop-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="11" cy="11" r="8" />
+                      <path d="m21 21-4.3-4.3" />
+                    </svg>
+                    <input
+                      type="text"
+                      id="admin-order-search"
+                      placeholder="অর্ডার নং (MB-1001), নাম বা মোবাইল নাম্বার দিয়ে খুঁজুন..."
+                      class="shop-search-input"
+                    />
+                  </div>
+
+                  <div id="admin-status-tabs" class="status-pill-group">
+                    <button type="button" class="status-tab-btn is-active" data-status="all">সব অর্ডার</button>
+                    <button type="button" class="status-tab-btn" data-status="pending">গৃহীত</button>
+                    <button type="button" class="status-tab-btn" data-status="processing">প্যাকেজিং</button>
+                    <button type="button" class="status-tab-btn" data-status="shipped">ডেলিভারি পথে</button>
+                    <button type="button" class="status-tab-btn" data-status="delivered">সম্পন্ন</button>
+                  </div>
+                </div>
+
+                <div id="admin-orders-list"></div>
+
+                <!-- Customer Contact Messages Inbox for Admin -->
+                <div style="margin-top:2rem;">
+                  <h2 style="font-size:1.125rem;font-weight:700;margin-bottom:0.875rem;">কাস্টমারের পাঠানো বার্তা</h2>
+                  <div id="admin-messages-list"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer class="site-footer">
+        <div class="container">
+          <div class="footer-top">
+            <div class="footer-brand-col" style="display:flex;flex-direction:column;gap:0.75rem;">
+              <div style="display:flex;align-items:center;gap:0.75rem;">
+                <img
+                  src="./assets/images/maltibazar_logo_1795244491759.jpg"
+                  alt="Maltibazar BD Logo"
+                  referrerPolicy="no-referrer"
+                  style="width:2.5rem;height:2.5rem;border-radius:0.5rem;object-fit:cover;border:1px solid rgba(255,255,255,0.15);"
+                />
+                <span class="brand-wordmark" style="color:#fff;">Maltibazar BD</span>
+              </div>
+              <p id="footer-tagline" style="font-size:0.875rem;color:#AEB6B0;line-height:1.6;max-width:24rem;"></p>
+            </div>
+
+            <div class="footer-links-col">
+              <h3 style="font-size:0.875rem;font-weight:600;color:#fff;margin-bottom:0.625rem;">Quick Links</h3>
+              <ul class="footer-link-list">
+                <li><button type="button" class="footer-link-btn" data-nav="home">Home</button></li>
+                <li><button type="button" class="footer-link-btn" data-nav="shop">Shop</button></li>
+                <li><button type="button" class="footer-link-btn" data-nav="orders">Orders</button></li>
+                <li><button type="button" class="footer-link-btn" data-nav="about">About</button></li>
+                <li><button type="button" class="footer-link-btn" data-nav="contact">Contact</button></li>
+              </ul>
+            </div>
+
+            <div class="footer-contact-col" style="display:flex;flex-direction:column;gap:0.625rem;font-size:0.875rem;">
+              <h3 style="font-size:0.875rem;font-weight:600;color:#fff;">লোকেশন ও মোবাইল</h3>
+              <p id="footer-address" style="color:#AEB6B0;line-height:1.6;"></p>
+              <p id="footer-phones" class="tabular-nums" style="color:#AEB6B0;"></p>
+              <p id="footer-email" style="color:#AEB6B0;"></p>
+            </div>
+          </div>
+
+          <div class="footer-bottom">
+            <p id="footer-copyright"></p>
+            <p>পেমেন্ট: ক্যাশ অন ডেলিভেরি · বিকাশ · নগদ · রকেট</p>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="order-modal" role="dialog" aria-modal="true" aria-labelledby="order-modal-title" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h2 id="order-modal-title" style="font-size:1.125rem;font-weight:700;color:var(--ink);">দ্রুত অর্ডার ফর্ম</h2>
+            <p style="font-size:0.75rem;color:var(--ink-muted);">Maltibazar BD · নিরাপদ চেকআউট</p>
+          </div>
+          <button type="button" id="order-modal-close" aria-label="বন্ধ করুন" class="icon-btn" style="width:2.25rem;height:2.25rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div id="order-modal-body" class="modal-body"></div>
+      </div>
+    </div>
+
+    <script src="./js/config.js"></script>
+    <script src="./js/catalog.js"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/app.js"></script>
+  </body>
+</html>
