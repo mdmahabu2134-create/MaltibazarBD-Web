@@ -1,0 +1,6 @@
+{
+  "name": "Maltibazar BD",
+  "description": "Maltibazar BD — খাঁটি ও তাজা বাদাম, ড্রাই ফ্রুটস, সীডস, মশলা, মধু, খেজুর, সবজি, মাছ ও গোস্তের নির্ভরযোগ্য অনলাইন বাজার।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
