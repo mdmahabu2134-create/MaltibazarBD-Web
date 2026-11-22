@@ -1,32 +1,41 @@
 /**
- * Maltibazar BD — Supabase REST & Auth API Client (Pure Vanilla JS)
- * Always normalizes every API call into a strict JSON shape:
+ * Maltibazar BD — Pure Cloud Database API & Realtime Client (Supabase REST, Auth & WebSocket)
+ *
+ * Strictly Cloud-First:
+ * - Zero localStorage fallback for orders, contact messages, or admin login.
+ * - Order creation only succeeds after Supabase PostgreSQL returns a persisted record.
+ * - Always normalizes every API call into strict JSON:
  *   { ok: boolean, status: number, data: object | null, error: string | null }
  *
  * Security:
- * - Only uses PUBLIC SUPABASE_URL + SUPABASE_ANON_KEY from window.MALTIBAZAR_CONFIG.
+ * - Uses ONLY public SUPABASE_URL + SUPABASE_ANON_KEY from window.MALTIBAZAR_CONFIG.
  * - Never embeds any service_role secret key in frontend code.
  * - Admin authentication uses Supabase Auth JWT stored in sessionStorage only.
- * - Row Level Security (RLS) on Supabase enforces access control at the database layer.
+ * - Database access is enforced by Supabase Row Level Security (RLS).
  */
 (function () {
   const SESSION_KEY = 'maltibazar_admin_session';
-  const MY_ORDERS_KEY = 'maltibazar_my_orders';
-  const LOCAL_ORDERS_KEY = 'maltibazar_preview_orders';
-  const LOCAL_MESSAGES_KEY = 'maltibazar_preview_messages';
+  const MY_RECEIPTS_KEY = 'maltibazar_my_cloud_receipts';
 
   function getConfig() {
     const cfg = window.MALTIBAZAR_CONFIG || {};
     const url = String(cfg.SUPABASE_URL || '').trim().replace(/\/+$/, '');
     const anonKey = String(cfg.SUPABASE_ANON_KEY || '').trim();
-    const isConfigured =
-      Boolean(url) &&
-      Boolean(anonKey) &&
-      !url.includes('YOUR_PROJECT_ID') &&
-      !anonKey.includes('YOUR_SUPABASE_ANON_KEY') &&
-      /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url);
 
-    return { url, anonKey, isConfigured };
+    const hasValidUrl =
+      /^https:\/\/[a-z0-9.-]+\.[a-z]{2,}(?:\/.*)?$/i.test(url) &&
+      !url.includes('YOUR_PROJECT_ID') &&
+      !url.includes('example.com');
+    const hasValidKey =
+      anonKey.length > 20 &&
+      !anonKey.includes('YOUR_SUPABASE_ANON_KEY') &&
+      !anonKey.includes('service_role');
+
+    return {
+      url,
+      anonKey,
+      isConfigured: hasValidUrl && hasValidKey,
+    };
   }
 
   function mapOrderRow(row) {
@@ -76,13 +85,13 @@
         sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
       }
     } catch {
-      // Ignore storage errors in restricted contexts
+      // Ignore storage restrictions
     }
   }
 
   function getMySessionOrders() {
     try {
-      const raw = sessionStorage.getItem(MY_ORDERS_KEY);
+      const raw = sessionStorage.getItem(MY_RECEIPTS_KEY);
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed.map(mapOrderRow).filter(Boolean) : [];
     } catch {
@@ -91,36 +100,27 @@
   }
 
   function saveMySessionOrder(order) {
-    if (!order) return;
+    if (!order || !order.id || !order.orderNumber) return;
     try {
       const existing = getMySessionOrders().filter((o) => o.id !== order.id);
-      const updated = [order, ...existing].slice(0, 25);
-      sessionStorage.setItem(MY_ORDERS_KEY, JSON.stringify(updated));
+      const updated = [order, ...existing].slice(0, 20);
+      sessionStorage.setItem(MY_RECEIPTS_KEY, JSON.stringify(updated));
     } catch {
-      // Ignore storage errors
-    }
-  }
-
-  function readLocalStore(key) {
-    try {
-      const raw = localStorage.getItem(key);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  }
-
-  function writeLocalStore(key, items) {
-    try {
-      localStorage.setItem(key, JSON.stringify(items));
-    } catch {
-      // Ignore storage errors
+      // Ignore storage restrictions
     }
   }
 
   async function requestJSON(endpoint, options = {}) {
-    const { url, anonKey } = getConfig();
+    const { url, anonKey, isConfigured } = getConfig();
+    if (!isConfigured) {
+      return {
+        ok: false,
+        status: 503,
+        data: null,
+        error: 'Cloud Database সংযুক্ত নয়। অনুগ্রহ করে public/js/config.js ফাইলে আপনার Supabase URL ও Anon Key সেট করুন।',
+      };
+    }
+
     const session = getAdminSession();
     const useAuthToken = options.useAdminToken && session?.accessToken;
 
@@ -172,7 +172,10 @@
         ok: false,
         status: 0,
         data: null,
-        error: err instanceof Error ? err.message : 'নেটওয়ার্ক সংযোগে সমস্যা হয়েছে।',
+        error:
+          err instanceof Error
+            ? `সার্ভার/ইন্টারনেট সংযোগ ব্যর্থ হয়েছে: ${err.message}`
+            : 'নেটওয়ার্ক সংযোগে সমস্যা হয়েছে।',
       };
     }
   }
@@ -215,7 +218,55 @@
     return true;
   }
 
-  // ---- Public Customer Actions ----
+  // ---- Cloud Database Connection Verification ----
+
+  async function checkDatabaseConnection() {
+    const cfg = getConfig();
+    if (!cfg.isConfigured) {
+      return {
+        ok: false,
+        status: 503,
+        data: { configured: false, connected: false },
+        error: 'public/js/config.js-এ এখনো Supabase URL ও Anon Key বসানো হয়নি।',
+      };
+    }
+
+    const res = await requestJSON('/rest/v1/rpc/check_db_health', {
+      method: 'POST',
+      body: {},
+    });
+
+    if (res.ok && res.data?.ok) {
+      return {
+        ok: true,
+        status: res.status,
+        data: { configured: true, connected: true, details: res.data },
+        error: null,
+      };
+    }
+
+    // Fallback check if check_db_health RPC was not yet run, verify REST schema reachability
+    if (res.status === 404) {
+      const schemaRes = await requestJSON('/rest/v1/', { method: 'GET' });
+      if (schemaRes.ok) {
+        return {
+          ok: false,
+          status: 404,
+          data: { configured: true, connected: true, schemaMissing: true },
+          error: 'Supabase সংযুক্ত হয়েছে, তবে supabase/schema.sql এখনো SQL Editor-এ রান করা হয়নি।',
+        };
+      }
+    }
+
+    return {
+      ok: false,
+      status: res.status,
+      data: { configured: true, connected: false },
+      error: res.error || 'Cloud Database-এর সাথে সংযোগ স্থাপন করা যায়নি।',
+    };
+  }
+
+  // ---- Public Customer Actions (Strictly Cloud Database) ----
 
   async function createOrder(payload) {
     const cfg = getConfig();
@@ -262,40 +313,16 @@
     }
 
     if (!cfg.isConfigured) {
-      // Local browser preview mode before Supabase keys are pasted in config.js
-      const subtotal = Math.round(unitPrice * quantity);
-      const deliveryFee = subtotal >= 2000 ? 0 : deliveryZone === 'dhaka' ? 60 : 120;
-      const totalAmount = subtotal + deliveryFee;
-      const existing = readLocalStore(LOCAL_ORDERS_KEY);
-      const order = {
-        id: `ord_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        orderNumber: `MB-${1001 + existing.length}`,
-        createdAt: new Date().toISOString(),
-        productId,
-        productName,
-        productImage: String(payload.productImage || ''),
-        categoryName: String(payload.categoryName || ''),
-        unitLabel: String(payload.unitLabel || '৫০০ গ্রাম'),
-        unitPrice,
-        quantity,
-        subtotal,
-        deliveryZone,
-        deliveryFee,
-        totalAmount,
-        paymentMethod,
-        transactionId: transactionId || undefined,
-        customerName,
-        customerPhone,
-        customerAddress,
-        note: note || undefined,
-        status: 'pending',
+      return {
+        ok: false,
+        status: 503,
+        data: null,
+        error:
+          'Cloud Database সংযুক্ত নয়, তাই অর্ডার সংরক্ষণ করা যায়নি। সাইট অ্যাডমিনকে public/js/config.js-এ Supabase সেটআপ সম্পন্ন করতে হবে।',
       };
-      writeLocalStore(LOCAL_ORDERS_KEY, [order, ...existing]);
-      saveMySessionOrder(order);
-      return { ok: true, status: 201, data: { order }, error: null };
     }
 
-    // Live Supabase Mode via SECURITY DEFINER RPC (strict JSON response + RLS safe)
+    // Save strictly via Supabase Cloud Database RPC (no localStorage fallback)
     const rpcRes = await requestJSON('/rest/v1/rpc/create_order', {
       method: 'POST',
       body: {
@@ -316,12 +343,21 @@
       },
     });
 
-    if (!rpcRes.ok || !rpcRes.data || !rpcRes.data.order) {
+    if (
+      !rpcRes.ok ||
+      !rpcRes.data ||
+      rpcRes.data.ok === false ||
+      !rpcRes.data.order ||
+      !rpcRes.data.order.id ||
+      !rpcRes.data.order.orderNumber
+    ) {
       return {
         ok: false,
-        status: rpcRes.status || 400,
+        status: rpcRes.status || 500,
         data: rpcRes.data,
-        error: rpcRes.error || 'অর্ডার সংরক্ষণ করা যায়নি।',
+        error:
+          rpcRes.error ||
+          'Cloud Database-এ অর্ডার সেভ করা যায়নি। অনুগ্রহ করে কিছুক্ষণ পর আবার চেষ্টা করুন।',
       };
     }
 
@@ -331,7 +367,6 @@
   }
 
   async function trackOrder(orderNumber, phone) {
-    const cfg = getConfig();
     const cleanNo = String(orderNumber || '').trim().toUpperCase();
     const cleanPhone = String(phone || '').replace(/[^0-9]/g, '');
 
@@ -342,24 +377,6 @@
         data: null,
         error: 'অনুগ্রহ করে অর্ডার নাম্বার এবং মোবাইল নাম্বার উভয়ই লিখুন।',
       };
-    }
-
-    if (!cfg.isConfigured) {
-      const all = readLocalStore(LOCAL_ORDERS_KEY);
-      const found = all.find(
-        (o) =>
-          String(o.orderNumber || '').toUpperCase() === cleanNo &&
-          String(o.customerPhone || '').replace(/[^0-9]/g, '') === cleanPhone
-      );
-      if (!found) {
-        return {
-          ok: false,
-          status: 404,
-          data: null,
-          error: 'অর্ডার নাম্বার বা মোবাইল নাম্বার মেলেনি।',
-        };
-      }
-      return { ok: true, status: 200, data: { order: mapOrderRow(found) }, error: null };
     }
 
     const res = await requestJSON('/rest/v1/rpc/track_order', {
@@ -375,7 +392,7 @@
         ok: false,
         status: res.status,
         data: res.data,
-        error: res.error || 'অর্ডার খুঁজতে সমস্যা হয়েছে।',
+        error: res.error || 'Cloud Database থেকে অর্ডার খোঁজা যায়নি।',
       };
     }
 
@@ -388,16 +405,36 @@
       };
     }
 
+    const mapped = mapOrderRow(res.data.order);
     return {
       ok: true,
       status: 200,
-      data: { order: mapOrderRow(res.data.order) },
+      data: { order: mapped },
       error: null,
     };
   }
 
-  async function submitContactMessage(payload) {
+  async function refreshMySessionOrders() {
     const cfg = getConfig();
+    const receipts = getMySessionOrders();
+    if (!cfg.isConfigured || receipts.length === 0) return receipts;
+
+    const refreshed = await Promise.all(
+      receipts.map(async (item) => {
+        const res = await trackOrder(item.orderNumber, item.customerPhone);
+        return res.ok && res.data?.order ? res.data.order : item;
+      })
+    );
+
+    try {
+      sessionStorage.setItem(MY_RECEIPTS_KEY, JSON.stringify(refreshed));
+    } catch {
+      // Ignore storage errors
+    }
+    return refreshed;
+  }
+
+  async function submitContactMessage(payload) {
     const name = String(payload.name || '').trim();
     const phone = String(payload.phone || '').trim();
     const message = String(payload.message || '').trim();
@@ -411,19 +448,6 @@
       };
     }
 
-    if (!cfg.isConfigured) {
-      const existing = readLocalStore(LOCAL_MESSAGES_KEY);
-      const item = {
-        id: `msg_${Date.now()}`,
-        createdAt: new Date().toISOString(),
-        name,
-        phone,
-        message,
-      };
-      writeLocalStore(LOCAL_MESSAGES_KEY, [item, ...existing]);
-      return { ok: true, status: 201, data: { message: item }, error: null };
-    }
-
     const res = await requestJSON('/rest/v1/contact_messages', {
       method: 'POST',
       headers: { Prefer: 'return=minimal' },
@@ -435,32 +459,19 @@
         ok: false,
         status: res.status,
         data: res.data,
-        error: res.error || 'বার্তা পাঠানো যায়নি।',
+        error: res.error || 'Cloud Database-এ বার্তা পাঠানো যায়নি।',
       };
     }
 
     return { ok: true, status: 201, data: { sent: true }, error: null };
   }
 
-  // ---- Admin Auth & Management Actions (Supabase Auth + RLS) ----
+  // ---- Admin Auth & Management Actions (Strictly Supabase Auth + RLS) ----
 
   async function adminSignIn(email, password) {
     const cfg = getConfig();
     const cleanEmail = String(email || '').trim();
     const cleanPassword = String(password || '');
-
-    if (!cfg.isConfigured) {
-      // Local preview admin session before Supabase keys are added
-      const session = {
-        accessToken: 'local-preview-token',
-        refreshToken: '',
-        expiresAt: Math.floor(Date.now() / 1000) + 86400,
-        user: { id: 'preview-admin', email: cleanEmail || 'admin@maltibazarbd.com' },
-        mode: 'local',
-      };
-      setAdminSession(session);
-      return { ok: true, status: 200, data: { session }, error: null };
-    }
 
     if (!cleanEmail || !cleanPassword) {
       return {
@@ -468,6 +479,15 @@
         status: 400,
         data: null,
         error: 'অনুগ্রহ করে অ্যাডমিন ইমেইল এবং পাসওয়ার্ড দিন।',
+      };
+    }
+
+    if (!cfg.isConfigured) {
+      return {
+        ok: false,
+        status: 503,
+        data: null,
+        error: 'Cloud Database সংযুক্ত নয়। public/js/config.js-এ Supabase URL ও Anon Key সেট করুন।',
       };
     }
 
@@ -481,7 +501,10 @@
         ok: false,
         status: res.status || 401,
         data: res.data,
-        error: 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।',
+        error:
+          res.status === 0
+            ? res.error
+            : 'ইমেইল বা পাসওয়ার্ড সঠিক নয়, অথবা Supabase Auth-এ ইউজার তৈরি করা হয়নি।',
       };
     }
 
@@ -497,7 +520,13 @@
     };
     setAdminSession(session);
 
-    // Verify user is listed in public.admin_users via RLS check
+    // Auto-link primary admin in public.admin_users if eligible, then verify via RLS
+    await requestJSON('/rest/v1/rpc/sync_primary_admin_on_login', {
+      method: 'POST',
+      useAdminToken: true,
+      body: {},
+    });
+
     const adminCheck = await requestJSON(
       `/rest/v1/admin_users?select=user_id,email&user_id=eq.${encodeURIComponent(session.user.id)}`,
       { method: 'GET', useAdminToken: true }
@@ -509,7 +538,7 @@
         ok: false,
         status: 403,
         data: null,
-        error: 'এই অ্যাকাউন্টটি অ্যাডমিন তালিকায় অনুমোদিত নয়। Supabase admin_users টেবিলে যুক্ত করুন।',
+        error: 'এই অ্যাকাউন্টটি অ্যাডমিন তালিকায় অনুমোদিত নয়। Supabase SQL Editor-এ schema.sql রান করুন।',
       };
     }
 
@@ -527,12 +556,6 @@
   }
 
   async function adminListOrders() {
-    const cfg = getConfig();
-    if (!cfg.isConfigured) {
-      const orders = readLocalStore(LOCAL_ORDERS_KEY).map(mapOrderRow).filter(Boolean);
-      return { ok: true, status: 200, data: { orders }, error: null };
-    }
-
     const ready = await ensureFreshAdminToken();
     if (!ready) {
       return { ok: false, status: 401, data: null, error: 'অ্যাডমিন সেশন শেষ হয়েছে, অনুগ্রহ করে আবার লগইন করুন।' };
@@ -559,18 +582,6 @@
   async function adminUpdateOrderStatus(orderId, status) {
     if (!['pending', 'processing', 'shipped', 'delivered'].includes(status)) {
       return { ok: false, status: 400, data: null, error: 'সঠিক অর্ডার স্ট্যাটাস নির্বাচন করুন।' };
-    }
-
-    const cfg = getConfig();
-    if (!cfg.isConfigured) {
-      const orders = readLocalStore(LOCAL_ORDERS_KEY);
-      const idx = orders.findIndex((o) => o.id === orderId);
-      if (idx === -1) {
-        return { ok: false, status: 404, data: null, error: 'অর্ডারটি খুঁজে পাওয়া যায়নি।' };
-      }
-      orders[idx] = { ...orders[idx], status };
-      writeLocalStore(LOCAL_ORDERS_KEY, orders);
-      return { ok: true, status: 200, data: { order: mapOrderRow(orders[idx]) }, error: null };
     }
 
     const ready = await ensureFreshAdminToken();
@@ -603,17 +614,6 @@
   }
 
   async function adminDeleteOrder(orderId) {
-    const cfg = getConfig();
-    if (!cfg.isConfigured) {
-      const orders = readLocalStore(LOCAL_ORDERS_KEY);
-      const filtered = orders.filter((o) => o.id !== orderId);
-      if (filtered.length === orders.length) {
-        return { ok: false, status: 404, data: null, error: 'অর্ডারটি খুঁজে পাওয়া যায়নি।' };
-      }
-      writeLocalStore(LOCAL_ORDERS_KEY, filtered);
-      return { ok: true, status: 200, data: { deleted: true }, error: null };
-    }
-
     const ready = await ensureFreshAdminToken();
     if (!ready) {
       return { ok: false, status: 401, data: null, error: 'অ্যাডমিন সেশন শেষ হয়েছে, অনুগ্রহ করে আবার লগইন করুন।' };
@@ -633,16 +633,6 @@
   }
 
   async function adminListMessages() {
-    const cfg = getConfig();
-    if (!cfg.isConfigured) {
-      return {
-        ok: true,
-        status: 200,
-        data: { messages: readLocalStore(LOCAL_MESSAGES_KEY) },
-        error: null,
-      };
-    }
-
     const ready = await ensureFreshAdminToken();
     if (!ready) {
       return { ok: false, status: 401, data: null, error: 'অ্যাডমিন সেশন শেষ হয়েছে।' };
@@ -665,10 +655,121 @@
     };
   }
 
+  // ---- Supabase Realtime WebSocket Subscription (Instant Cross-Device Orders) ----
+
+  function subscribeToOrdersRealtime(onOrderChange, onStatus) {
+    const cfg = getConfig();
+    const session = getAdminSession();
+    if (!cfg.isConfigured || !session?.accessToken || typeof WebSocket === 'undefined') {
+      if (typeof onStatus === 'function') onStatus('polling');
+      return () => {};
+    }
+
+    let ws = null;
+    let heartbeatTimer = null;
+    let reconnectTimer = null;
+    let closedByCaller = false;
+    let refCounter = 1;
+
+    const wsBase = cfg.url.replace(/^https:/i, 'wss:').replace(/^http:/i, 'ws:');
+    const wsUrl = `${wsBase}/realtime/v1/websocket?apikey=${encodeURIComponent(cfg.anonKey)}&vsn=1.0.0`;
+
+    function sendMsg(topic, event, payload) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(
+        JSON.stringify({
+          topic,
+          event,
+          payload,
+          ref: String(refCounter++),
+        })
+      );
+    }
+
+    function connect() {
+      if (closedByCaller) return;
+      const activeSession = getAdminSession();
+      if (!activeSession?.accessToken) return;
+
+      try {
+        ws = new WebSocket(wsUrl);
+      } catch {
+        if (typeof onStatus === 'function') onStatus('polling');
+        return;
+      }
+
+      ws.onopen = () => {
+        if (typeof onStatus === 'function') onStatus('realtime');
+        sendMsg('realtime:public:orders', 'phx_join', {
+          config: {
+            broadcast: { self: false },
+            presence: { key: '' },
+            postgres_changes: [{ event: '*', schema: 'public', table: 'orders' }],
+          },
+          access_token: activeSession.accessToken,
+        });
+
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = setInterval(() => {
+          sendMsg('phoenix', 'heartbeat', {});
+        }, 25000);
+      };
+
+      ws.onmessage = (evt) => {
+        try {
+          const msg = JSON.parse(evt.data);
+          if (msg.event === 'postgres_changes' && msg.payload?.data) {
+            const evtData = msg.payload.data;
+            const mapped = evtData.record ? mapOrderRow(evtData.record) : null;
+            if (typeof onOrderChange === 'function') {
+              onOrderChange({
+                eventType: evtData.type || 'INSERT',
+                order: mapped,
+              });
+            }
+          }
+        } catch {
+          // Ignore non-JSON frames
+        }
+      };
+
+      ws.onerror = () => {
+        if (typeof onStatus === 'function') onStatus('polling');
+      };
+
+      ws.onclose = () => {
+        clearInterval(heartbeatTimer);
+        if (typeof onStatus === 'function') onStatus('polling');
+        if (!closedByCaller && getAdminSession()) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(connect, 6000);
+        }
+      };
+    }
+
+    connect();
+
+    return function unsubscribe() {
+      closedByCaller = true;
+      clearInterval(heartbeatTimer);
+      clearTimeout(reconnectTimer);
+      if (ws) {
+        try {
+          ws.close();
+        } catch {
+          // Ignore close errors
+        }
+        ws = null;
+      }
+    };
+  }
+
   window.MALTIBAZAR_API = {
     getConfig,
+    checkDatabaseConnection,
     getAdminSession,
     getMySessionOrders,
+    refreshMySessionOrders,
     createOrder,
     trackOrder,
     submitContactMessage,
@@ -678,5 +779,6 @@
     adminUpdateOrderStatus,
     adminDeleteOrder,
     adminListMessages,
+    subscribeToOrdersRealtime,
   };
 })();

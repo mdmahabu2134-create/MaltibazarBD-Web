@@ -43,6 +43,13 @@
     adminSearch: '',
     adminStatusFilter: 'all',
     confirmDeleteId: null,
+    knownOrderIds: null, // Set<string> once baseline loaded
+    unreadOrderIds: new Set(),
+    adminSyncTimer: null,
+    realtimeUnsubscribe: null,
+    toastHideTimer: null,
+    syncInFlight: false,
+    baseTitle: document.title,
     modal: null, // { product, selectedWeight, quantity, deliveryZone, paymentMethod, transactionId, customerName, customerPhone, customerAddress, note, submitting, errorMsg, confirmedOrder }
   };
 
@@ -734,8 +741,10 @@
       });
 
       m.submitting = false;
-      if (!res.ok || !res.data?.order) {
-        m.errorMsg = res.error || 'অর্ডার জমা দিতে সমস্যা হয়েছে।';
+      if (!res.ok || !res.data?.order || !res.data.order.id || !res.data.order.orderNumber) {
+        m.errorMsg =
+          res.error ||
+          'Cloud Database-এ অর্ডার সেভ করা যায়নি। অর্ডার সম্পন্ন হয়নি—অনুগ্রহ করে আবার চেষ্টা করুন।';
         renderOrderModal();
         return;
       }
@@ -743,6 +752,7 @@
       m.confirmedOrder = res.data.order;
       state.myOrders = API.getMySessionOrders();
       if (API.getAdminSession()) {
+        if (state.knownOrderIds) state.knownOrderIds.add(res.data.order.id);
         state.adminOrders = [res.data.order, ...state.adminOrders.filter((o) => o.id !== res.data.order.id)];
       }
       updateNavOrderBadge();
@@ -880,32 +890,213 @@
     wrap.innerHTML = state.myOrders.map((o) => renderOrderCardHTML(o, false)).join('');
   }
 
-  async function loadAdminData() {
-    state.adminOrdersLoading = true;
-    renderAdminOrdersList();
+  function playOrderChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+      const now = ctx.currentTime;
+      [659.25, 880].forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+        gain.gain.setValueAtTime(0.001, now + idx * 0.14);
+        gain.gain.exponentialRampToValueAtTime(0.18, now + idx * 0.14 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.14 + 0.28);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.14);
+        osc.stop(now + idx * 0.14 + 0.3);
+      });
+    } catch {
+      // Ignore Web Audio restrictions if user hasn't interacted yet
+    }
+  }
 
-    const [ordersRes, msgRes] = await Promise.all([
-      API.adminListOrders(),
-      API.adminListMessages(),
-    ]);
-
-    state.adminOrdersLoading = false;
-    if (ordersRes.ok && ordersRes.data?.orders) {
-      state.adminOrders = ordersRes.data.orders;
-    } else if (ordersRes.status === 401 || ordersRes.status === 403) {
-      await API.adminSignOut();
-      renderOrdersPage();
+  function updateNotifyButtonUI() {
+    const btn = el('admin-notify-btn');
+    if (!btn) return;
+    if (!('Notification' in window)) {
+      btn.textContent = 'সাউন্ড অ্যালার্ট টেস্ট';
       return;
     }
+    if (Notification.permission === 'granted') {
+      btn.textContent = 'নোটিফিকেশন চালু আছে';
+      btn.classList.add('btn-notify-active');
+    } else if (Notification.permission === 'denied') {
+      btn.textContent = 'ব্রাউজারে ব্লক করা';
+      btn.classList.remove('btn-notify-active');
+    } else {
+      btn.textContent = 'নোটিফিকেশন চালু করুন';
+      btn.classList.remove('btn-notify-active');
+    }
+  }
 
-    if (msgRes.ok && msgRes.data?.messages) {
-      state.adminMessages = msgRes.data.messages;
+  function hideNewOrderToast() {
+    if (state.toastHideTimer) {
+      clearTimeout(state.toastHideTimer);
+      state.toastHideTimer = null;
+    }
+    const toast = el('new-order-toast');
+    if (toast) toast.classList.add('hidden');
+  }
+
+  function showNewOrderToast(newOrders) {
+    const toast = el('new-order-toast');
+    if (!toast || !newOrders.length) return;
+    const latest = newOrders[0];
+    el('new-order-toast-heading').textContent =
+      newOrders.length > 1
+        ? `${formatBDT(newOrders.length)}টি নতুন অর্ডার এসেছে!`
+        : `নতুন অর্ডার: ${latest.orderNumber}`;
+    el('new-order-toast-body').innerHTML = `
+      <strong>${escapeHtml(latest.customerName)}</strong> (${escapeHtml(latest.customerPhone)}) ·
+      ${escapeHtml(latest.productName)} (${escapeHtml(latest.unitLabel)}) ·
+      <strong class="tabular-nums">৳ ${formatBDT(latest.totalAmount)}</strong>
+    `;
+    toast.classList.remove('hidden');
+
+    if (state.toastHideTimer) clearTimeout(state.toastHideTimer);
+    state.toastHideTimer = setTimeout(hideNewOrderToast, 12000);
+  }
+
+  function fireBrowserNotification(newOrders) {
+    if (!('Notification' in window) || Notification.permission !== 'granted' || !newOrders.length) {
+      return;
+    }
+    const latest = newOrders[0];
+    try {
+      const n = new Notification(`Maltibazar BD — নতুন অর্ডার ${latest.orderNumber}`, {
+        body: `${latest.customerName} (${latest.customerPhone}) — ${latest.productName} · ৳ ${formatBDT(latest.totalAmount)}`,
+        icon: './assets/images/maltibazar_logo_1795244491759.jpg',
+        tag: `mb-order-${latest.id}`,
+      });
+      n.onclick = () => {
+        window.focus();
+        state.ordersTab = 'admin';
+        navigate('orders');
+        n.close();
+      };
+    } catch {
+      // Ignore Notification constructor errors in restricted browsers
+    }
+  }
+
+  function updateDocumentTitleAndUnreadUI() {
+    const unreadCount = state.unreadOrderIds.size;
+    document.title =
+      unreadCount > 0 ? `(${formatBDT(unreadCount)}) নতুন অর্ডার! — ${state.baseTitle}` : state.baseTitle;
+
+    const banner = el('admin-unread-banner');
+    const textEl = el('admin-unread-banner-text');
+    if (!banner || !textEl) return;
+
+    if (unreadCount > 0 && API.getAdminSession()) {
+      textEl.textContent = `${formatBDT(unreadCount)}টি নতুন অর্ডার এসেছে ও অপেক্ষমাণ রয়েছে!`;
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+    }
+  }
+
+  function stopAdminAutoSync() {
+    if (state.adminSyncTimer) {
+      clearInterval(state.adminSyncTimer);
+      state.adminSyncTimer = null;
+    }
+    if (typeof state.realtimeUnsubscribe === 'function') {
+      state.realtimeUnsubscribe();
+      state.realtimeUnsubscribe = null;
+    }
+    state.knownOrderIds = null;
+    state.unreadOrderIds.clear();
+    updateDocumentTitleAndUnreadUI();
+  }
+
+  function startAdminAutoSync() {
+    if (!API.getAdminSession()) return;
+
+    if (!state.realtimeUnsubscribe && typeof API.subscribeToOrdersRealtime === 'function') {
+      state.realtimeUnsubscribe = API.subscribeToOrdersRealtime(() => {
+        loadAdminData({ silent: true });
+      });
     }
 
-    updateNavOrderBadge();
-    renderOrdersStats();
-    renderAdminOrdersList();
-    renderAdminMessagesList();
+    if (!state.adminSyncTimer) {
+      state.adminSyncTimer = setInterval(() => {
+        if (!API.getAdminSession()) {
+          stopAdminAutoSync();
+          return;
+        }
+        loadAdminData({ silent: true });
+      }, 5000);
+    }
+  }
+
+  async function loadAdminData(options = {}) {
+    const silent = Boolean(options && options.silent);
+    if (!API.getAdminSession() || state.syncInFlight) return;
+
+    state.syncInFlight = true;
+    if (!silent && state.adminOrders.length === 0) {
+      state.adminOrdersLoading = true;
+      renderAdminOrdersList();
+    }
+
+    try {
+      const [ordersRes, msgRes] = await Promise.all([
+        API.adminListOrders(),
+        API.adminListMessages(),
+      ]);
+
+      state.adminOrdersLoading = false;
+      if (ordersRes.ok && ordersRes.data?.orders) {
+        const fetchedOrders = ordersRes.data.orders;
+        if (state.knownOrderIds !== null) {
+          const brandNewOrders = fetchedOrders.filter((o) => !state.knownOrderIds.has(o.id));
+          if (brandNewOrders.length > 0) {
+            brandNewOrders.forEach((o) => state.unreadOrderIds.add(o.id));
+            playOrderChime();
+            showNewOrderToast(brandNewOrders);
+            fireBrowserNotification(brandNewOrders);
+          }
+        } else {
+          // On initial admin login, highlight pending orders as awaiting review
+          const pendingOrders = fetchedOrders.filter((o) => o.status === 'pending');
+          if (pendingOrders.length > 0) {
+            pendingOrders.forEach((o) => state.unreadOrderIds.add(o.id));
+            showNewOrderToast(pendingOrders);
+          }
+        }
+        state.knownOrderIds = new Set(fetchedOrders.map((o) => o.id));
+        state.adminOrders = fetchedOrders;
+      } else if (ordersRes.status === 401 || ordersRes.status === 403) {
+        stopAdminAutoSync();
+        await API.adminSignOut();
+        renderOrdersPage();
+        return;
+      }
+
+      if (msgRes.ok && msgRes.data?.messages) {
+        state.adminMessages = msgRes.data.messages;
+      }
+
+      updateDocumentTitleAndUnreadUI();
+      updateNavOrderBadge();
+      if (state.activePage === 'orders' && state.ordersTab === 'admin') {
+        renderOrdersStats();
+        if (!state.confirmDeleteId) {
+          renderAdminOrdersList();
+        }
+        renderAdminMessagesList();
+      }
+    } finally {
+      state.syncInFlight = false;
+    }
   }
 
   function bindAdminOrderCardEvents(container) {
@@ -1025,19 +1216,31 @@
     if (isCustomer) {
       renderMyOrdersList();
       renderOrdersStats();
+      API.refreshMySessionOrders().then((freshOrders) => {
+        if (state.ordersTab === 'customer' && Array.isArray(freshOrders)) {
+          state.myOrders = freshOrders;
+          renderMyOrdersList();
+          renderOrdersStats();
+        }
+      });
       return;
     }
 
     const session = API.getAdminSession();
     if (!session) {
+      stopAdminAutoSync();
       el('admin-login-card').classList.remove('hidden');
       el('admin-workspace').classList.add('hidden');
       renderOrdersStats();
     } else {
       el('admin-login-card').classList.add('hidden');
       el('admin-workspace').classList.remove('hidden');
+      el('admin-supabase-warning').classList.toggle('hidden', cfg.isConfigured);
       el('admin-user-email').textContent = session.user?.email || 'Admin';
-      loadAdminData();
+      updateNotifyButtonUI();
+      updateDocumentTitleAndUnreadUI();
+      startAdminAutoSync();
+      loadAdminData({ silent: state.adminOrders.length > 0 });
     }
   }
 
@@ -1188,11 +1391,68 @@
       }
 
       el('admin-password').value = '';
+      state.knownOrderIds = null;
+      startAdminAutoSync();
       renderOrdersPage();
     });
 
-    el('admin-refresh-btn').addEventListener('click', loadAdminData);
+    el('login-db-check-btn').addEventListener('click', async () => {
+      const btn = el('login-db-check-btn');
+      const box = el('admin-db-check-result');
+      btn.disabled = true;
+      btn.textContent = 'পরীক্ষা হচ্ছে...';
+      box.className = 'alert-info';
+      box.textContent = 'Cloud Database ও API সংযোগ যাচাই করা হচ্ছে...';
+      box.classList.remove('hidden');
+
+      const res = await API.checkDatabaseConnection();
+      btn.disabled = false;
+      btn.textContent = 'Database পরীক্ষা করুন';
+
+      if (res.ok) {
+        box.className = 'alert-notify';
+        box.textContent = 'Cloud Database সংযোগ এবং API সঠিকভাবে কাজ করছে!';
+      } else {
+        box.className = 'alert-error';
+        box.textContent = res.error || 'Cloud Database সংযোগ ব্যর্থ হয়েছে।';
+      }
+    });
+
+    el('admin-mark-seen-btn').addEventListener('click', () => {
+      state.unreadOrderIds.clear();
+      hideNewOrderToast();
+      updateDocumentTitleAndUnreadUI();
+    });
+
+    el('admin-notify-btn').addEventListener('click', async () => {
+      playOrderChime();
+      if ('Notification' in window && Notification.permission === 'default') {
+        try {
+          await Notification.requestPermission();
+        } catch {
+          // Ignore permission request failure
+        }
+      }
+      updateNotifyButtonUI();
+    });
+
+    el('new-order-toast-close').addEventListener('click', hideNewOrderToast);
+    el('new-order-toast-view').addEventListener('click', () => {
+      hideNewOrderToast();
+      state.ordersTab = 'admin';
+      navigate('orders');
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && API.getAdminSession()) {
+        loadAdminData({ silent: true });
+      }
+    });
+
+    el('admin-refresh-btn').addEventListener('click', () => loadAdminData({ silent: false }));
     el('admin-logout-btn').addEventListener('click', async () => {
+      stopAdminAutoSync();
+      hideNewOrderToast();
       await API.adminSignOut();
       state.adminOrders = [];
       state.adminMessages = [];
@@ -1221,4 +1481,8 @@
   bindEvents();
   renderShop();
   updateNavOrderBadge();
+  if (API.getAdminSession()) {
+    startAdminAutoSync();
+    loadAdminData({ silent: true });
+  }
 })();

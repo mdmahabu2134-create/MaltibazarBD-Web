@@ -339,15 +339,93 @@ BEGIN
 END;
 $$;
 
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT USAGE, SELECT ON SEQUENCE public.order_number_seq TO anon, authenticated;
+GRANT INSERT ON TABLE public.orders TO anon, authenticated;
+GRANT SELECT, UPDATE, DELETE ON TABLE public.orders TO authenticated;
+GRANT INSERT ON TABLE public.contact_messages TO anon, authenticated;
+GRANT SELECT, DELETE ON TABLE public.contact_messages TO authenticated;
+GRANT SELECT ON TABLE public.admin_users TO authenticated;
+
+-- 11. Health check RPC for verifying live Cloud Database + API connectivity
+CREATE OR REPLACE FUNCTION public.check_db_health()
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_has_orders BOOLEAN;
+  v_has_messages BOOLEAN;
+BEGIN
+  SELECT to_regclass('public.orders') IS NOT NULL INTO v_has_orders;
+  SELECT to_regclass('public.contact_messages') IS NOT NULL INTO v_has_messages;
+
+  RETURN jsonb_build_object(
+    'ok', (v_has_orders AND v_has_messages),
+    'database', 'connected',
+    'ordersTableReady', v_has_orders,
+    'messagesTableReady', v_has_messages,
+    'checkedAt', NOW()
+  );
+END;
+$$;
+
+-- 12. Safely auto-link primary admin email upon first Supabase Auth login
+CREATE OR REPLACE FUNCTION public.sync_primary_admin_on_login()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  v_uid UUID := auth.uid();
+  v_email TEXT;
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  SELECT email INTO v_email
+  FROM auth.users
+  WHERE id = v_uid AND deleted_at IS NULL;
+
+  IF lower(coalesce(v_email, '')) = 'almahabub4321@gmail.com' THEN
+    INSERT INTO public.admin_users (user_id, email)
+    VALUES (v_uid, v_email)
+    ON CONFLICT (user_id) DO NOTHING;
+    RETURN TRUE;
+  END IF;
+
+  RETURN public.is_admin();
+END;
+$$;
+
 GRANT EXECUTE ON FUNCTION public.create_order(TEXT, TEXT, TEXT, TEXT, TEXT, NUMERIC, INTEGER, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.track_order(TEXT, TEXT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.is_admin() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.check_db_health() TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.sync_primary_admin_on_login() TO authenticated;
 
--- ============================================================================
--- AFTER CREATING YOUR ADMIN USER IN SUPABASE AUTH (Authentication -> Users),
--- RUN THIS ONE LINE WITH YOUR ADMIN USER'S EMAIL:
---
--- INSERT INTO public.admin_users (user_id, email)
--- SELECT id, email FROM auth.users WHERE email = 'your-admin@email.com'
--- ON CONFLICT (user_id) DO NOTHING;
--- ============================================================================
+-- Ensure full row payloads and enable Supabase Realtime on orders & messages
+ALTER TABLE public.orders REPLICA IDENTITY FULL;
+ALTER TABLE public.contact_messages REPLICA IDENTITY FULL;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    BEGIN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+    BEGIN
+      ALTER PUBLICATION supabase_realtime ADD TABLE public.contact_messages;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+  END IF;
+END $$;
+
+-- Automatically link admin user if already created in Authentication -> Users
+INSERT INTO public.admin_users (user_id, email)
+SELECT id, email FROM auth.users WHERE lower(email) = 'almahabub4321@gmail.com'
+ON CONFLICT (user_id) DO NOTHING;
